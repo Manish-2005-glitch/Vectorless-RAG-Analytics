@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+asyncpg
+httpx
+openai
+streamlit
+pandas
+sqlglot
+redis
