@@ -1,5 +1,8 @@
+from dotenv import load_dotenv
 import asyncpg
 import os
+
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -19,3 +22,4 @@ async def get_pool():
             )
         
     return pool
+
