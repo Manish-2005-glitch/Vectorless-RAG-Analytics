@@ -1,5 +1,5 @@
 from db import get_pool
-
+import asyncio
 SCHEMA_SQL = """
 BEGIN;
 
@@ -38,3 +38,6 @@ async def create_tables():
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute(SCHEMA_SQL)
+        
+if __name__ == "__main__":
+    asyncio.run(create_tables())
