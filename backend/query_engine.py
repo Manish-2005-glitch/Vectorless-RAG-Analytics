@@ -1,11 +1,17 @@
 import os
 import sqlglot
 from sqlglot import expressions as exp
-import openai
+from openai import OpenAI
 from db import get_pool
 from cache import get_cache, set_cache
+from dotenv import load_dotenv
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+load_dotenv()
+
+client = OpenAI(
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+    base_url="https://openrouter.ai/api/v1"
+)
 
 SCHEMA = """
 users(id, email, username)
@@ -55,11 +61,13 @@ async def generate_sql(question):
     SQL:
     """
     
-    response = openai.ChatCompletion.create(
-        model = "gpt-4o-mini",
-        messages = [{"role": "user", "content": prompt}],
-        temperature = 0
-    )
+    response = client.chat.completions.create(
+            model="mistralai/mistral-7b-instruct",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0
+        )
     
     sql = response.choices[0].message["content"]
     return sql.replace("```","").strip()
@@ -69,3 +77,52 @@ async def execute_sql(sql):
     async with pool.acquire() as conn:
         return await conn.fetch(sql)
     
+async def explain_result(question, result):
+    prompt = f"""
+    Question: {question}
+    Result: {result[:5]}
+    
+    Explain Briefly.
+    """
+    response = client.chat.completions.create(
+            model="mistralai/mistral-7b-instruct",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0
+        )
+    
+    return response.choices[0].message["content"]
+
+
+async def run_query(question):
+    cache_key = f"q:{question}"
+    
+    cached = await get_cache(cache_key)
+    
+    if cached:
+        return cached
+    
+    for _ in range(2):
+        sql = await generate_sql(question)
+        
+        if not validate_sql(sql):
+            return {"error": "Generated SQL is not valid."}
+        
+        try:
+            result = await execute_sql(sql)
+            explanation = await explain_result(question, result)
+            
+            response = {
+                "sql": sql,
+                "result" : [dict(r) for r in result],
+                "explanation": explanation
+            }
+            
+            await set_cache(cache_key, response)
+            return response
+        
+        except:
+            continue
+    
+    return {"error": "Error executing SQL."}
