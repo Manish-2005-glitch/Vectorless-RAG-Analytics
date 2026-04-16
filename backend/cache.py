@@ -5,9 +5,20 @@ import json
 
 load_dotenv()
 
-REDIS_URL = os.getenv("REDIS_URL")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
-r = redis.from_url(REDIS_URL, decode_responses=True)
+print("Loaded REDIS_URL:", REDIS_URL)
+
+try:
+    if REDIS_URL:
+        r = redis.from_url(REDIS_URL, decode_responses=True)
+        print("PING:", r.ping())
+    else:
+        print("No REDIS_URL found")
+        r = None
+except Exception as e:
+    print("Redis Error:", e)
+    r = None
 
 def get_cache(key):
     data = r.get(key)

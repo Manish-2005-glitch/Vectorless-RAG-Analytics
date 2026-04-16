@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from models import create_tables
-from ingest import ingest
-from query_engine import run_query
+from backend.models import create_tables
+from backend.ingest import ingest
+from backend.query_engine import run_query
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -13,16 +14,12 @@ async def startup():
 async def health():
     return {"status": "ok"}
 
+class QueryRequest(BaseModel):
+    question: str
+
 @app.post("/query")
-async def query(q: dict):
-    question = q.get("question")
-    
-    if not question:
-        return {"error": "Question is required."}
-    
-    result = await run_query(question)
-    
-    return result
+async def query(req: QueryRequest):
+    return await run_query(req.question)
 
 @app.post("/refresh-data")
 async def refresh():

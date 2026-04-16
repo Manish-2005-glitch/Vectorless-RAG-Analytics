@@ -1,6 +1,6 @@
 import httpx
 import asyncio
-from db import get_pool
+from backend.db import get_pool
 from datetime import datetime
 
 BASE_URL = "https://fakestoreapi.com"

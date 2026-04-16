@@ -1,4 +1,4 @@
-from db import get_pool
+from backend.db import get_pool
 import asyncio
 SCHEMA_SQL = """
 BEGIN;
