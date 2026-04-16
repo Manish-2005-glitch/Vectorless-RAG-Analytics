@@ -4,7 +4,6 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 
-# Load env
 load_dotenv()
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
@@ -23,7 +22,6 @@ if st.button("Run"):
         try:
             res = requests.post(API, json={"question": q})
 
-            # Handle bad response
             if res.status_code != 200:
                 st.error(f"Backend error: {res.status_code}")
                 st.text(res.text)
